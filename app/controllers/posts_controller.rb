@@ -1,11 +1,13 @@
 class PostsController < ApplicationController
-  before_action :set_post, only: [:show, :edit, :update]
+  before_action :set_post, only: [:show, :edit, :update, :vote]
+  before_action :require_user, except: [:index, :show]
 
   def index
-    @posts = Post.all
+    @posts = Post.all.sort_by{ |post| post.overall_votes }.reverse
   end
 
   def show
+    @comment = Comment.new
   end
 
   def new
@@ -14,7 +16,7 @@ class PostsController < ApplicationController
 
   def create
     @post = Post.new(post_params)
-    @post.creator = User.first # Hard coded for now, will change when we have authentication
+    @post.creator = current_user
 
     if @post.save
       flash['notice'] = "Your post was created."
@@ -36,10 +38,20 @@ class PostsController < ApplicationController
     end
   end
 
+  def vote
+    vote = Vote.create(voteable: @post, creator: current_user, vote: params[:vote])
+    if vote.valid?
+      flash['notice'] = 'Your vote was counted.'
+    else
+      flash['error'] = "You have already voted on this post"
+    end
+    redirect_to :back
+  end
+
   private
 
   def post_params
-    params.require(:post).permit(:title, :url, :description)
+    params.require(:post).permit(:title, :url, :description, category_ids: [])
   end
 
   def set_post
