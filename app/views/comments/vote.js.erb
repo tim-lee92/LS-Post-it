@@ -1,0 +1,5 @@
+<% if @vote.valid? %>
+  $('#comment_<%= @comment.id %>_votes').html('<%= @comment.overall_votes %>');
+<% else %>
+  alert('You have already voted on this comment')
+<% end %>
